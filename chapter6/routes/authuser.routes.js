@@ -75,7 +75,7 @@ router.post('/', (req, res) => {
         res.end();
       } else {
         res.writeHead('200', { 'Content-Type': 'text/html;charset=utf8' });
-        res.write('<h2>사용자 추가 실패</h2>');
+        res.write('<h2>로그인 실패</h2>');
 
         res.end();
       }
