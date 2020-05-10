@@ -46,6 +46,9 @@ app.use(
   })
 );
 
+/*
+ * 로그인 라우팅
+ */
 router.route('/process/login').post((req, res) => {
   console.log('process/login 호출됨');
 
@@ -82,10 +85,46 @@ router.route('/process/login').post((req, res) => {
   }
 });
 
-app.use('/', router);
+/*
+ * 유저 추가 라우팅
+ */
+router.route('/process/adduser').post((req, res) => {
+  console.log('process/adduser 호출됨');
 
+  const paramId = req.body.id || req.query.id;
+  const paramPassword = req.body.password || req.query.password;
+  const paramName = req.body.name || req.query.name;
+
+  if (database) {
+    addUser(database, paramId, paramPassword, paramName, (err, result) => {
+      if (err) {
+        throw err;
+      }
+
+      if (result && result.insertedCount > 0) {
+        console.dir(result);
+        res.writeHead('200', { 'Content-Type': 'text/html;charset=utf8' });
+        res.write('<h2>사용자 추가 성공</h2>');
+        res.end();
+      } else {
+        res.writeHead('200', { 'Content-Type': 'text/html;charset=utf8' });
+        res.write('<h2>사용자 추가 실패</h2>');
+        res.end();
+      }
+    });
+  } else {
+    res.writeHead('200', { 'Content-Type': 'text/html;charset=utf8' });
+    res.write('<h2>데이터 베이스 연결 실패</h2>');
+    res.end();
+  }
+});
+
+app.use('/', router);
 app.use(errorHandler);
 
+/*
+ * 서버 시작
+ */
 http.createServer(app).listen(app.get('port'), () => {
   console.log('서버가 시작되었습니다. 포트 : ' + app.get('port'));
 
@@ -115,4 +154,33 @@ function authUser(database, id, password, callback) {
       callback(null, null);
     }
   });
+}
+
+function addUser(database, id, password, name, callback) {
+  console.log('addUser 호출됨 : ' + id + ', ' + password + ', ' + name);
+
+  const users = database.collection('users');
+
+  users.insertMany(
+    [
+      {
+        id: id,
+        password: password,
+        name: name,
+      },
+    ],
+    (err, result) => {
+      if (err) {
+        callback(err, null);
+        return;
+      }
+
+      if (result.insertedCount > 0) {
+        console.log('사용자 레코드 추가됨 : ' + result.insertedCount);
+      } else {
+        console.log('추가된 레코드가 없음 .');
+      }
+      callback(null, result);
+    }
+  );
 }
